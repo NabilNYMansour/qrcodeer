@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Download, ImagePlus, X } from 'lucide-react'
 
+const SIZE_OPTIONS = [128, 256, 512] as const
 const DEFAULT_SIZE = 256
-const MIN_SIZE = 128
-const MAX_SIZE = 512
 const LOGO_SIZE_RATIO = 0.2 // logo is 20% of QR size
 
 export function QrGenerator() {
@@ -43,19 +42,19 @@ export function QrGenerator() {
   const handleDownloadPng = () => {
     const svg = svgRef.current?.querySelector('svg')
     if (!svg || !value.trim()) return
-    const svgString = new XMLSerializer().serializeToString(svg)
+
+    // Clone SVG and strip the center <image> so the serialized SVG only has the QR pattern.
+    // We'll draw the center image on the canvas ourselves so it appears in the PNG.
+    const svgClone = svg.cloneNode(true) as SVGElement
+    const imageEl = svgClone.querySelector('image')
+    if (imageEl) imageEl.remove()
+
+    const svgString = new XMLSerializer().serializeToString(svgClone)
     const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
     const url = URL.createObjectURL(blob)
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = size + 32
-      canvas.height = size + 32
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(img, 16, 16, size, size)
+    const qrImg = new Image()
+
+    const finishPng = (canvas: HTMLCanvasElement) => {
       const pngUrl = canvas.toDataURL('image/png')
       const a = document.createElement('a')
       a.href = pngUrl
@@ -63,7 +62,33 @@ export function QrGenerator() {
       a.click()
       URL.revokeObjectURL(url)
     }
-    img.src = url
+
+    qrImg.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = size + 32
+      canvas.height = size + 32
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(qrImg, 16, 16, size, size)
+
+      if (centerImageUrl) {
+        const logoSize = Math.round(size * LOGO_SIZE_RATIO)
+        const logoX = 16 + (size - logoSize) / 2
+        const logoY = 16 + (size - logoSize) / 2
+        const centerImg = new Image()
+        centerImg.onload = () => {
+          ctx.drawImage(centerImg, logoX, logoY, logoSize, logoSize)
+          finishPng(canvas)
+        }
+        centerImg.onerror = () => finishPng(canvas)
+        centerImg.src = centerImageUrl
+      } else {
+        finishPng(canvas)
+      }
+    }
+    qrImg.src = url
   }
 
   const logoSize = Math.round(size * LOGO_SIZE_RATIO)
@@ -105,27 +130,20 @@ export function QrGenerator() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="qr-size" className="text-foreground/90">
-                Size
-              </Label>
-              <div className="flex items-center gap-3">
-                <Input
-                  id="qr-size"
-                  type="number"
-                  min={MIN_SIZE}
-                  max={MAX_SIZE}
-                  value={size}
-                  onChange={(e) =>
-                    setSize(
-                      Math.min(
-                        MAX_SIZE,
-                        Math.max(MIN_SIZE, Number(e.target.value) || DEFAULT_SIZE)
-                      )
-                    )
-                  }
-                  className="w-24 h-10"
-                />
-                <span className="text-muted-foreground text-sm">{MIN_SIZE} - {MAX_SIZE} px</span>
+              <Label className="text-foreground/90">Size</Label>
+              <div className="flex flex-wrap gap-2">
+                {SIZE_OPTIONS.map((option) => (
+                  <Button
+                    key={option}
+                    type="button"
+                    variant={size === option ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSize(option)}
+                    className="h-9 min-w-18"
+                  >
+                    {option}px
+                  </Button>
+                ))}
               </div>
             </div>
 
@@ -179,8 +197,9 @@ export function QrGenerator() {
             <div
               className={cn(
                 'flex items-center justify-center border-2 border-dashed transition-colors',
-                hasContent ? 'border-border/50 bg-white' : 'border-muted-foreground/25 min-w-[280px] min-h-[280px]'
+                hasContent ? 'border-border/50 bg-white' : 'border-muted-foreground/25'
               )}
+              style={!hasContent ? { width: size, height: size } : undefined}
             >
               {hasContent ? (
                 <div
@@ -205,18 +224,17 @@ export function QrGenerator() {
                 </p>
               )}
             </div>
-            {hasContent && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadPng}
-                className="mt-3 gap-2 w-full sm:w-auto"
-              >
-                <Download className="w-4 h-4" />
-                Download PNG
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPng}
+              disabled={!hasContent}
+              className="mt-3 gap-2 w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4" />
+              Download PNG
+            </Button>
           </div>
         </CardContent>
       </Card>
