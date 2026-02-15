@@ -70,11 +70,11 @@ export function QrGenerator() {
   const imageSettings =
     centerImageUrl && value.trim()
       ? {
-          src: centerImageUrl,
-          height: logoSize,
-          width: logoSize,
-          excavate: true,
-        }
+        src: centerImageUrl,
+        height: logoSize,
+        width: logoSize,
+        excavate: true,
+      }
       : undefined
 
   const hasContent = value.trim().length > 0
@@ -89,116 +89,71 @@ export function QrGenerator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid gap-6 sm:grid-cols-[auto,1fr]">
-            {/* Preview column - left, always visible */}
-            <div className="flex flex-col items-start">
-              <Label className="mb-2 text-foreground/90">Preview</Label>
-              <div
-                className={cn(
-                  'flex items-center justify-center border-2 border-dashed transition-colors',
-                  hasContent ? 'border-border/50 bg-white' : 'border-muted-foreground/25 min-w-[280px] min-h-[280px]'
-                )}
-              >
-                {hasContent ? (
-                  <div
-                    ref={svgRef}
-                    className="inline-flex rounded-lg border border-border/50 bg-white shadow-sm"
-                    aria-hidden
-                  >
-                    <QRCodeSVG
-                      value={value.trim()}
-                      size={size}
-                      level={centerImageUrl ? 'H' : 'M'}
-                      marginSize={4}
-                      bgColor="#ffffff"
-                      fgColor="#000000"
-                      imageSettings={imageSettings}
-                      title="QR code"
-                    />
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center px-4">
-                    No preview
-                  </p>
-                )}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="qr-value" className="text-foreground/90">
+                Content
+              </Label>
+              <Input
+                id="qr-value"
+                type="text"
+                placeholder="https://example.com or any text..."
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="h-10 font-mono text-sm placeholder:font-sans"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="qr-size" className="text-foreground/90">
+                Size
+              </Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="qr-size"
+                  type="number"
+                  min={MIN_SIZE}
+                  max={MAX_SIZE}
+                  value={size}
+                  onChange={(e) =>
+                    setSize(
+                      Math.min(
+                        MAX_SIZE,
+                        Math.max(MIN_SIZE, Number(e.target.value) || DEFAULT_SIZE)
+                      )
+                    )
+                  }
+                  className="w-24 h-10"
+                />
+                <span className="text-muted-foreground text-sm">{MIN_SIZE} - {MAX_SIZE} px</span>
               </div>
-              {hasContent && (
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-foreground/90">Center image</Label>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  aria-label="Upload center image"
+                />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={handleDownloadPng}
-                  className="mt-3 gap-2 w-full sm:w-auto"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2 h-9"
                 >
-                  <Download className="w-4 h-4" />
-                  Download PNG
+                  <ImagePlus className="w-4 h-4" />
+                  Upload image
                 </Button>
-              )}
-            </div>
-
-            {/* Form column */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="qr-value" className="text-foreground/90">
-                  Content
-                </Label>
-                <Input
-                  id="qr-value"
-                  type="text"
-                  placeholder="https://example.com or any text..."
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  className="h-10 font-mono text-sm placeholder:font-sans"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="qr-size" className="text-foreground/90">
-                  Size
-                </Label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    id="qr-size"
-                    type="number"
-                    min={MIN_SIZE}
-                    max={MAX_SIZE}
-                    value={size}
-                    onChange={(e) =>
-                      setSize(
-                        Math.min(
-                          MAX_SIZE,
-                          Math.max(MIN_SIZE, Number(e.target.value) || DEFAULT_SIZE)
-                        )
-                      )
-                    }
-                    className="w-24 h-10"
-                  />
-                  <span className="text-muted-foreground text-sm">{MIN_SIZE}–{MAX_SIZE} px</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-foreground/90">Center image</Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    aria-label="Upload center image"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="gap-2 h-9"
-                  >
-                    <ImagePlus className="w-4 h-4" />
-                    Upload image
-                  </Button>
-                  {centerImageUrl && (
+                {centerImageUrl && (
+                  <div className="flex items-center gap-2 flex-1">
+                    {/* put the name instead of the image */}
+                    <span className="text-muted-foreground text-sm">{centerImageUrl.split('/').pop()}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -209,13 +164,59 @@ export function QrGenerator() {
                       <X className="w-3.5 h-3.5" />
                       Remove
                     </Button>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Optional. Shown in the middle of the QR for branding.
-                </p>
+                  </div>
+                )}
               </div>
+              <p className="text-muted-foreground text-xs">
+                Optional. Shown in the middle of the QR for branding.
+              </p>
             </div>
+          </div>
+
+          {/* Preview at end of card */}
+          <div className="flex flex-col items-start">
+            <Label className="mb-2 text-foreground/90">Preview</Label>
+            <div
+              className={cn(
+                'flex items-center justify-center border-2 border-dashed transition-colors',
+                hasContent ? 'border-border/50 bg-white' : 'border-muted-foreground/25 min-w-[280px] min-h-[280px]'
+              )}
+            >
+              {hasContent ? (
+                <div
+                  ref={svgRef}
+                  className="inline-flex rounded-lg border border-border/50 bg-white shadow-sm"
+                  aria-hidden
+                >
+                  <QRCodeSVG
+                    value={value.trim()}
+                    size={size}
+                    level={centerImageUrl ? 'H' : 'M'}
+                    marginSize={4}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                    imageSettings={imageSettings}
+                    title="QR code"
+                  />
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm text-center px-4">
+                  No preview
+                </p>
+              )}
+            </div>
+            {hasContent && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadPng}
+                className="mt-3 gap-2 w-full sm:w-auto"
+              >
+                <Download className="w-4 h-4" />
+                Download PNG
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
