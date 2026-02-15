@@ -17,7 +17,7 @@ function App() {
         <header className="py-2 px-4">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <a href="/" className="font-bold text-2xl flex gap-0.5 items-center" title="Go to homepage">
-              qrcodeer
+              QRcodeer
               <QrCode className="w-6 h-6" />
             </a>
             <div className="flex items-center gap-1">
