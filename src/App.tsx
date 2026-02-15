@@ -39,6 +39,11 @@ function App() {
             'dark:bg-[radial-gradient(#404040_1px,transparent_1px)]'
           )}
         />
+        <footer className="py-2 px-4">
+          <div className="max-w-4xl mx-auto flex items-center justify-center">
+            <p className="text-muted-foreground text-xs">Made by <a href="https://nabilmansour.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Nabil Mansour</a></p>
+          </div>
+        </footer>
         <div className="pointer-events-none -z-10 absolute inset-0 flex items-center justify-center mask-[radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-background" />
       </div>
     </ThemeProvider>
