@@ -15,6 +15,7 @@ export function QrGenerator() {
   const [value, setValue] = useState('')
   const [size, setSize] = useState(DEFAULT_SIZE)
   const [centerImageUrl, setCenterImageUrl] = useState<string | null>(null)
+  const [centerImageFileName, setCenterImageFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<HTMLDivElement>(null)
 
@@ -30,12 +31,14 @@ export function QrGenerator() {
     if (!file?.type.startsWith('image/')) return
     if (centerImageUrl) URL.revokeObjectURL(centerImageUrl)
     setCenterImageUrl(URL.createObjectURL(file))
+    setCenterImageFileName(file.name)
     e.target.value = ''
   }
 
   const clearCenterImage = () => {
     if (centerImageUrl) URL.revokeObjectURL(centerImageUrl)
     setCenterImageUrl(null)
+    setCenterImageFileName(null)
     fileInputRef.current?.value && (fileInputRef.current.value = '')
   }
 
@@ -65,18 +68,18 @@ export function QrGenerator() {
 
     qrImg.onload = () => {
       const canvas = document.createElement('canvas')
-      canvas.width = size + 32
-      canvas.height = size + 32
+      canvas.width = size
+      canvas.height = size
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(qrImg, 16, 16, size, size)
+      ctx.drawImage(qrImg, 0, 0, size, size)
 
       if (centerImageUrl) {
         const logoSize = Math.round(size * LOGO_SIZE_RATIO)
-        const logoX = 16 + (size - logoSize) / 2
-        const logoY = 16 + (size - logoSize) / 2
+        const logoX = (size - logoSize) / 2
+        const logoY = (size - logoSize) / 2
         const centerImg = new Image()
         centerImg.onload = () => {
           ctx.drawImage(centerImg, logoX, logoY, logoSize, logoSize)
@@ -170,8 +173,7 @@ export function QrGenerator() {
                 </Button>
                 {centerImageUrl && (
                   <div className="flex items-center gap-2 flex-1">
-                    {/* put the name instead of the image */}
-                    <span className="text-muted-foreground text-sm">{centerImageUrl.split('/').pop()}</span>
+                    <span className="text-muted-foreground text-sm">{centerImageFileName}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -211,7 +213,7 @@ export function QrGenerator() {
                     value={value.trim()}
                     size={size}
                     level={centerImageUrl ? 'H' : 'M'}
-                    marginSize={4}
+                    marginSize={0}
                     bgColor="#ffffff"
                     fgColor="#000000"
                     imageSettings={imageSettings}
@@ -230,7 +232,7 @@ export function QrGenerator() {
               size="sm"
               onClick={handleDownloadPng}
               disabled={!hasContent}
-              className="mt-3 gap-2 w-full sm:w-auto"
+              className="mt-3 gap-2 w-auto"
             >
               <Download className="w-4 h-4" />
               Download PNG
