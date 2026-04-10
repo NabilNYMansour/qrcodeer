@@ -4,6 +4,7 @@ import { GithubButton } from '@/components/github-button'
 import { QrGenerator } from '@/components/qr-generator'
 import { QrCode } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Analytics } from "@vercel/analytics/react"
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
         </footer>
         <div className="pointer-events-none -z-10 absolute inset-0 flex items-center justify-center mask-[radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-background" />
       </div>
+    <Analytics />
     </ThemeProvider>
   )
 }
